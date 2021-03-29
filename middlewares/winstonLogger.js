@@ -1,4 +1,3 @@
-const { StatusCodes } = require('http-status-codes');
 const winston = require('winston');
 
 const logger = winston.createLogger({
@@ -19,7 +18,7 @@ const winstonLogger = (req, res, next) => {
     headers: req.headers,
     dateValidation: req.dateValidation.getTime() / 1000,
   });
-  res.sendStatus(StatusCodes.OK);
+  next();
 };
 
 module.exports = winstonLogger;
