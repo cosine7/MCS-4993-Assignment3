@@ -1,4 +1,4 @@
-const StatusCodes = require('http-status-codes');
+const { StatusCodes } = require('http-status-codes');
 
 const deleteBlocker = (req, res, next) => {
   if (req.method === 'DELETE') {
