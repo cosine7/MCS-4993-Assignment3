@@ -1,5 +1,6 @@
 const express = require('express');
 const BodyParser = require('body-parser');
+const router = require('./routes/routes');
 const deleteBlocker = require('./middlewares/deleteBlocker');
 const dateValidator = require('./middlewares/dateValidator');
 const winstonLogger = require('./middlewares/winstonLogger');
@@ -9,9 +10,10 @@ const errorHandler = require('./middlewares/errorHandler');
 const app = express();
 
 app.use(BodyParser.json());
+app.use(router);
 app.use(deleteBlocker);
 app.use(dateValidator);
 app.use(winstonLogger);
-app.use('/', randomStatusSender);
+app.use(randomStatusSender);
 app.use(errorHandler);
 app.listen(8080);

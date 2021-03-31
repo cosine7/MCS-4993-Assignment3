@@ -20,49 +20,43 @@ const withinRange = (time, serverTime) => time.getTime() >= serverTime.getTime()
 const dateValidator = (req, res, next) => {
   const params = req.query;
   const { headers } = req;
-  const qsDateKey = getDateKey(params);
-  const hDateKey = getDateKey(headers);
-  const qsEpochTime = getDate(params[qsDateKey]);
-  const hEpochTime = getDate(headers[hDateKey]);
+  const queryStringDateKey = getDateKey(params);
+  const headerDateKey = getDateKey(headers);
+  const queryStringEpochTime = getDate(params[queryStringDateKey]);
+  const headerEpochTime = getDate(headers[headerDateKey]);
   const currentServerTime = new Date(Date.now());
 
-  if (!qsDateKey && !hDateKey) {
-    res.status(StatusCodes.UNAUTHORIZED).send('Neither query string parameters nor headers supplied a date');
-  } else if (qsDateKey && hDateKey) {
-    if (isValidDate(qsEpochTime) && isValidDate(hEpochTime)) {
-      if (qsEpochTime.getTime() !== hEpochTime.getTime()) {
-        res.status(StatusCodes.UNAUTHORIZED).send('Dates in query string parameters and headers are different!');
-      } else if (withinRange(qsEpochTime, currentServerTime)) {
-        req.dateValidation = qsEpochTime;
+  const checkDate = (date) => {
+    if (isValidDate(date)) {
+      if (withinRange(date, currentServerTime)) {
+        req.dateValidation = date;
         next();
       } else {
-        res.status(StatusCodes.UNAUTHORIZED).send('Both date out of range');
+        res.sendStatus(StatusCodes.UNAUTHORIZED);
       }
     } else {
-      res.status(StatusCodes.BAD_REQUEST).send('Invalid dates in query string parameters and headers!');
+      res.status(StatusCodes.BAD_REQUEST).send('Invalid epoch date!');
     }
-  } else if (qsDateKey) {
-    if (isValidDate(qsEpochTime)) {
-      if (withinRange(qsEpochTime, currentServerTime)) {
-        req.dateValidation = qsEpochTime;
+  };
+
+  if (queryStringDateKey && headerDateKey) {
+    if (isValidDate(queryStringEpochTime) && isValidDate(headerEpochTime)) {
+      if (queryStringEpochTime.getTime() === headerEpochTime.getTime()
+          && withinRange(queryStringEpochTime, currentServerTime)) {
+        req.dateValidation = queryStringEpochTime;
         next();
       } else {
-        res.status(StatusCodes.UNAUTHORIZED).send('Query string date out of range');
+        res.sendStatus(StatusCodes.UNAUTHORIZED);
       }
     } else {
-      res.status(StatusCodes.BAD_REQUEST).send('Invalid epoch date in query string parameters!');
+      res.status(StatusCodes.BAD_REQUEST).send('Invalid epoch dates!');
     }
-  } else if (hDateKey) {
-    if (isValidDate(hEpochTime)) {
-      if (withinRange(hEpochTime, currentServerTime)) {
-        req.dateValidation = hEpochTime;
-        next();
-      } else {
-        res.status(StatusCodes.UNAUTHORIZED).send('Header date out of range');
-      }
-    } else {
-      res.status(StatusCodes.BAD_REQUEST).send('Invalid epoch date in query string parameters!');
-    }
+  } else if (queryStringDateKey) {
+    checkDate(queryStringEpochTime);
+  } else if (headerDateKey) {
+    checkDate(headerEpochTime);
+  } else {
+    res.sendStatus(StatusCodes.UNAUTHORIZED);
   }
 };
 
